@@ -26,8 +26,12 @@ TVL is calculated by multiplying the quantity of each locked token by its corres
 
 # TO DO
 
-### ASYNC refactor of older code
 
 ### Finish Models
+
+### Webhook Notifications
+
+### ASYNC refactor of older code
+
 ### Frontend
 
