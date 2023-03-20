@@ -4,7 +4,18 @@
     "python.formatting.provider": "autopep8",
     "python.linting.enabled": false,
     "python.linting.pylintEnabled": false,
-    "python.linting.mypyEnabled": true
+    "python.linting.mypyEnabled": true,
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "**/__pycache__": true
+
+
+    }
 
 
 
