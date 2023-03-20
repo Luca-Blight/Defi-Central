@@ -1,0 +1,36 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_HOST: $PG_HOST
+      POSTGRES_USER: $PG_USER
+      POSTGRES_DB: $PG_DB
+      POSTGRES_PASSWORD: $PG_PASSWORD
+      POSTGRES_PORT: $PG_PORT
+    env_file:
+      - ./.env
+
+  app:
+    build: .
+    restart: always
+    volumes:
+      - .:/db
+    environment:
+      PG_HOST: $PG_HOST
+      PG_USER: $PG_USER
+      PG_DB: $PG_DB
+      PG_PASSWORD: $PG_PASSWORD
+      PG_PORT: $PG_PORT
+      ETH_ALCHEMY_URL: $ETH_ALCHEMY_URL
+      POLYGON_ALCHEMY_URL: $POLYGON_ALCHEMY_URL
+
+    env_file:
+      - ./.env
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+    # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
+    network_mode: service:db
