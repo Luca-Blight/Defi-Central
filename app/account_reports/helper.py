@@ -6,9 +6,7 @@ from web3.middleware import geth_poa_middleware
 
 
 matic_web3 = Web3(Web3.HTTPProvider(os.environ.get("POLYGON_ALCHEMY_URL")))
-matic_web3.middleware_onion.inject(
-    geth_poa_middleware, layer=0
-)  
+matic_web3.middleware_onion.inject(geth_poa_middleware, layer=0)
 eth_web3 = Web3(Web3.HTTPProvider(os.environ.get("ETH_ALCHEMY_URL")))
 
 

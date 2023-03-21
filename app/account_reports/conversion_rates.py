@@ -8,7 +8,7 @@ from bittrex_api.models.v3.candle_interval import CandleInterval
 from models.ConversionRate import ConversionRate
 from datetime import datetime, timedelta
 from query import query_update
-from database import engine
+from database.database import engine
 from itertools import chain
 from typing import List
 

@@ -13,7 +13,7 @@ from helper import get_block_date, get_transaction_fee
 from account_info import contract_table, wallet_table
 from models.AccountLedger import AccountLedger
 from models.Account import Account
-from database import Session , engine
+from database.database import Session, engine
 from sqlalchemy import insert, delete, and_
 from typing import List
 from accounts import eth_account_addresses
@@ -30,10 +30,12 @@ settings = Settings()
 # make async
 
 
-logging.basicConfig(level=logging.INFO, 
-                    format="{asctime} {levelname} {message}",
-                    style='{',
-                    datefmt='%m-%d-%y %H:%M:%S')
+logging.basicConfig(
+    level=logging.INFO,
+    format="{asctime} {levelname} {message}",
+    style="{",
+    datefmt="%m-%d-%y %H:%M:%S",
+)
 
 log = logging.getLogger()
 
@@ -44,7 +46,7 @@ contract_names = list(contract_table.values())
 contract_addresses = list(contract_table.keys())
 
 wallet_names = list(account_table.values())
-wallet_addresses = list(account_table.keys())      
+wallet_addresses = list(account_table.keys())
 
 # if wallet not in contract names, then it is a user wallet
 def map_stream(
@@ -73,7 +75,7 @@ def map_stream(
 
     for rawResult in stream:
         if rawResult.status_code == 400:
-            log.error('stream error, status code 400')
+            log.error("stream error, status code 400")
         else:
             result = json.loads(rawResult.text)
             if result and result.get("result", None):
@@ -89,9 +91,9 @@ def map_stream(
                             or data["asset"] == "ART"
                             or data["category"] == "erc721"
                             or data["asset"] == None
-                        ):  
+                        ):
                             currency: str = currency_type.value
-                            
+
                             block_number: int = Web3.toInt(hexstr=str(data["blockNum"]))
                             block_date: pd.Timestamp = get_block_date(
                                 block_number, currency
@@ -103,8 +105,12 @@ def map_stream(
                                 else wallet_account
                             )
                             to_wallet: str = data["to"]
-                            if (wallet_id in contract_names) and (wallet_table.get(from_wallet, None)): # if the wallet/account is a contract and the from_wallet is a wallet of ours, then skip. This avoids double counting.
-                                log.info(f'''skipping contract event under {wallet_id} for transaction_hash: {transaction_hash} from_wallet: {from_wallet} to_wallet: {to_wallet} block_date:{block_date}, because it is already under events for [''') 
+                            if (wallet_id in contract_names) and (
+                                wallet_table.get(from_wallet, None)
+                            ):  # if the wallet/account is a contract and the from_wallet is a wallet of ours, then skip. This avoids double counting.
+                                log.info(
+                                    f"""skipping contract event under {wallet_id} for transaction_hash: {transaction_hash} from_wallet: {from_wallet} to_wallet: {to_wallet} block_date:{block_date}, because it is already under events for ["""
+                                )
                                 skipped += 1
                                 continue
                             else:
@@ -152,16 +158,17 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
     eth_walletledger_records = []
     eth_wallet_records = []
 
-    account_id, account_address, account_currency,account_block_number = (
+    account_id, account_address, account_currency, account_block_number = (
         account.account_id,
         account.account,
         account.currency,
         account.block_number,
-
     )
 
     ALCHEMY_URL: str = (
-        "POLYGON_ALCHEMY_URL" if account_currency.value == "MATIC" else "ETH_ALCHEMY_URL"
+        "POLYGON_ALCHEMY_URL"
+        if account_currency.value == "MATIC"
+        else "ETH_ALCHEMY_URL"
     )
 
     hex_block_number: str = (
@@ -190,7 +197,7 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
                             "internal",
                             "erc721",
                             "erc20",
-                            "erc1155"
+                            "erc1155",
                         ],
                     }
                 ],
@@ -217,7 +224,7 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
                             "internal",
                             "erc721",
                             "erc20",
-                            "erc1155"
+                            "erc1155",
                         ],
                     }
                 ],
@@ -297,10 +304,10 @@ def load_eth_stream(
                     "block_date",
                     "quantity",
                     "currency",
-                    "created_at"
+                    "created_at",
                 ]
             ]
-            .drop_duplicates(subset=["transaction_hash",'quantity'], keep="first")
+            .drop_duplicates(subset=["transaction_hash", "quantity"], keep="first")
             .to_dict("records")
         )
 
@@ -334,7 +341,8 @@ def load_eth_stream(
                 session.query(Account)
                 .filter(
                     and_(
-                        Account.account_id == account.account_id, Account.account == account
+                        Account.account_id == account.account_id,
+                        Account.account == account,
                     )
                 )
                 .first()
@@ -349,7 +357,6 @@ def load_eth_stream(
             logging.info(
                 f" wallet: {account.wallet_id} of {account}  has been updated with the most recent record for future extraction: {account.account_id} of {account} "
             )
-
 
 
 def run_eth_pipeline(account_addresses: List[dict]):
@@ -369,18 +376,17 @@ def run_eth_pipeline(account_addresses: List[dict]):
 
 if __name__ == "__main__":
 
-    log.info('eth pipeline started')
+    log.info("eth pipeline started")
     start = time.time()
 
-    log.info(f"These are all the wallet addresses being run through the eth pipeline: {eth_account_addresses}")
-    
+    log.info(
+        f"These are all the wallet addresses being run through the eth pipeline: {eth_account_addresses}"
+    )
+
     run_eth_pipeline(eth_account_addresses)
-    
-    log.info(f'cleaning wallet_ledger table of duplicates')
+
+    log.info(f"cleaning wallet_ledger table of duplicates")
     # cleans edge case duplicates in wallet_ledger table
 
     end = time.time()
-    log.info(f'eth pipeline finished, total time elapsed: {end - start} seconds')
-
-
-
+    log.info(f"eth pipeline finished, total time elapsed: {end - start} seconds")

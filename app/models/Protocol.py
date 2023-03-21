@@ -1,22 +1,31 @@
-from database import Base
-from sqlmodel import SQLModel, Column, Integer, String, DateTime
+from sqlmodel import SQLModel, Field
+from typing import Optional
+from database.database import engine
+from datetime import datetime
 
 class Protocol(SQLModel, table=True):
+    
+    id: Optional[int] = Field(default=None, primary_key=True) 
+    parent_protocol: Optional[str]
+    name: Optional[str] 
+    contract_address: Optional[str]
+    symbol: Optional[str]
+    category: Optional[str]
+    company_url: Optional[str]
+    oracle: Optional[str]
+    twitter_handle: Optional[str]
+    logo: Optional[str]
+    created_at: datetime = Field(default=datetime.utcnow)
 
-    __tablename__ = "protocol"
 
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    parent_name = Column(String(255), nullable=False)
-    name = Column(String(255), nullable=False)
-    contract_address = Column(String(255), nullable=True)
-    symbol = Column(String(255), nullable=True)
-    category = Column(String(255), nullable=True)
-    company_url = Column(String(255), nullable=True)
-    oracle = Column(String(255), nullable=True)
-    twitter_handle = Column(String(255), nullable=True)
-    logo = Column(String(255), nullable=True)
-    created_at = Column(DateTime, nullable=False)
-    
-    
-    
-# what is treasury?
+
+async def create_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+async def main():
+    await create_tables()
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())

@@ -19,4 +19,8 @@ class Account(SQLModel, table=True):
     description = Column(Text, nullable=True)
     contract = Column(String(255), nullable=True)
     created_at = Column(DateTime, nullable=False)
-    
+
+
+engine = create_engine(sqlite_url, echo=True)
+
+SQLModel.metadata.create_all(engine)

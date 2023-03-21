@@ -1,5 +1,6 @@
-from database import Base
+from database.database import Base
 from sqlmodel import SQLModel, Field, Column, Integer, String, DateTime, ForeignKey
+
 
 class Investor(SQLModel, table=True):
 
@@ -9,5 +10,3 @@ class Investor(SQLModel, table=True):
     name = Column(String(255), nullable=False)
     fund = Column(String(255), nullable=True)
     created_at = Column(DateTime, nullable=False)
-    
-    

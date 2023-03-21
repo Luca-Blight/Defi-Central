@@ -14,7 +14,7 @@
 
 Total Value Locked (TVL) is a metric used in decentralized finance (DeFi) to measure the amount of assets locked in various DeFi protocols. It helps assess the popularity and growth of DeFi projects. The formula for calculating TVL varies depending on the specific protocol, but in general, it can be represented as:
 
-TVL = Σ (Token_i * Price_i)
+TVL = Σ (Token_Quantity * Price)
 
 where:
 

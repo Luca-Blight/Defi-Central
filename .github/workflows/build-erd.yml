@@ -31,11 +31,6 @@ jobs:
         
     - name: generate ERD
       env: 
-        PG_HOST: ${{ secrets.RDS_STAGING_HOST }}
-        PG_DB: postgres
-        PG_USER: ${{ secrets.RDS_STAGING_USER }}
-        PG_PASSWORD: ${{ secrets.RDS_STAGING_PASSWORD }}
-        PG_PORT: 5432
         BASE_URL: ${{ secrets.BASE_URL }}
       run: python app/scripts/erd_gen.py
 

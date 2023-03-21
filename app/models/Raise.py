@@ -1,5 +1,6 @@
-from database import Base
+from database.database import Base
 from sqlmodel import SQLModel, Field, Column, Integer, String, DateTime, ForeignKey
+
 
 class Raise(SQLModel, table=True):
 
@@ -15,9 +16,5 @@ class Raise(SQLModel, table=True):
     source = Column(String(255), nullable=True)
     investor_id = Column(Integer, ForeignKey("investor.id"), nullable=False)
     created_at = Column(DateTime, nullable=False)
-    
-    
-    
-# what is treasury?
 
-chainTvls 
+
