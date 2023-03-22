@@ -1,6 +1,5 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
-from database.database import engine
 from datetime import datetime
 
 class Protocol(SQLModel, table=True):
@@ -16,16 +15,3 @@ class Protocol(SQLModel, table=True):
     twitter_handle: Optional[str]
     logo: Optional[str]
     created_at: datetime = Field(default=datetime.utcnow)
-
-
-
-async def create_tables():
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
-
-async def main():
-    await create_tables()
-
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())

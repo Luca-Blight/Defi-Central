@@ -1,15 +1,15 @@
-from sqlmodel import SQLModel, Column, Integer, Float, DateTime, ForeignKey
-
+from sqlmodel import SQLModel, Field
+from typing import Optional
+from datetime import datetime
 
 class Financial(SQLModel, table=True):
 
     __tablename__ = "financial"
     # ensure id is foreign key
-    id = Column(
-        Integer, primary_key=True, autoincrement=True, nullable=False
-    )  # Foreign key relationship
-    tvl = Column(Float, nullable=True)
-    fees = Column(Float, nullable=True)
-    date = Column(DateTime, nullable=False)
-    protocol_id = Column(Integer, ForeignKey("protocol.id"), nullable=False)
-    created_at = Column(DateTime, nullable=False)
+    id: int = Field(default=None, primary_key=True) 
+    tvl: Optional[float]
+    fees: Optional[float]
+    date: Optional[datetime]
+    protocol_id: int = Field(foreign_key="protocol.id")
+    created_at: datetime = Field(default=datetime.utcnow)
+    
