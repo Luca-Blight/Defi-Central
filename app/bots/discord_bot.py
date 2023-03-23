@@ -19,7 +19,7 @@ async def on_ready():
 
 @bot.command()
 async def send_image(ctx, channel_id: int, image_path="tvl_over_time.png"):
-    target_channel = bot.get_channel(channel_id)
+    target_channel = bot.get_channel(int(channel_id))
     
     if target_channel is None:
         await ctx.send("Invalid channel ID. Please provide a valid channel ID.")
@@ -44,5 +44,4 @@ async def send_image(ctx, channel_id: int, image_path="tvl_over_time.png"):
         
 
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-
 bot.run(DISCORD_TOKEN)
