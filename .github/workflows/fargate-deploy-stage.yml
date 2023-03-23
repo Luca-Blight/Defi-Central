@@ -1,56 +1,23 @@
 on:
   push:
-    branches: 
+    branches:
       - main
 
 name: Deploy-Fargate-Stage
 env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: lgndart
-  ECS_SERVICE: ecom-database-stage
+  AWS_REGION: us-east-2
+  ECR_REPOSITORY: defi-central
+  ECS_SERVICE: defi-central-stage
   ECS_CLUSTER: default
-  # ECS_TASK_DEFINITION: task-definition-stage.json
-  ECS_TASK_FAMILY: ecom-database-stage
-  CONTAINER_NAME: ecom-database-stage
-
-  ECS_TASK_DEFINITION_WALLET: task-definition-wallet-stage.json
-  ECS_TASK_FAMILY_WALLET: ecom-database-wallet-stage
-  CONTAINER_NAME_WALLET: ecom-database-wallet-stage
-  ECS_SERVICE_WALLET: ecom-database-wallet-stage
-
-  ECS_TASK_DEFINITION_CONVERSION: task-definition-conversion-stage.json
-  ECS_TASK_FAMILY_CONVERSION: ecom-database-conversion-stage
-  CONTAINER_NAME_CONVERSION: ecom-database-conversion-stage
-  ECS_SERVICE_CONVERSION: ecom-database-conversion-stage
-
-  ECS_TASK_DEFINITION_ETH_SECONDARY: task-definition-eth_secondary-stage.json
-  ECS_TASK_FAMILY_ETH_SECONDARY: ecom-database-eth_secondary-stage
-  CONTAINER_NAME_ETH_SECONDARY: ecom-database-eth_secondary-stage
-  ECS_SERVICE_ETH_SECONDARY: ecom-database-eth-secondary
-  EVENTS_RULE_PREFIX_ETH_SECONDARY: eth-secondary-staging
-
-  ECS_TASK_DEFINITION_STRIPE_PROCESSOR: task-definition-stripe_processor-stage.json
-  ECS_TASK_FAMILY_STRIPE_PROCESSOR: ecom-database-stripe_processor-stage
-  CONTAINER_NAME_STRIPE_PROCESSOR: ecom-database-stripe_processor-stage
-  ECS_SERVICE_STRIPE_PROCESSOR: ecom-database-stripe_processor
-  EVENTS_RULE_PREFIX_STRIPE_PROCESSOR: ecom-database-stripe_processor
-
-  ECS_TASK_DEFINITION_WAX_SECONDARY: task-definition-wax-secondary-stage.json
-  ECS_TASK_FAMILY_WAX_SECONDARY: ecom-database-wax-secondary-stage
-  CONTAINER_NAME_WAX_SECONDARY: ecom-database-wax-secondary-stage
-  ECS_SERVICE_WAX_SECONDARY: ecom-database-wax-secondary
-  EVENTS_RULE_PREFIX_WAX_SECONDARY: ecom-database-wax-secondary
-
-  ECS_TASK_DEFINITION_PLATFORM: task-definition-platform-stage.json
-  ECS_TASK_FAMILY_PLATFORM: ecom-database-platform-stage
-  CONTAINER_NAME_PLATFORM: ecom-database-platform-stage
-  ECS_SERVICE_PLATFORM: ecom-database-platform-stage
+  ECS_TASK_FAMILY: defi-central-stage
+  CONTAINER_NAME: defi-central-stage
+  ECS_SERVICE_WALLET: defi-central-stage
 
 jobs:
   Build:
     runs-on: ubuntu-latest
     outputs:
-      image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:ecom-database-stage-${{ github.sha }}
+      image: ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:defi-central-${{ github.sha }}
 
     steps:
       - name: Checkout
@@ -73,7 +40,7 @@ jobs:
         uses: docker/build-push-action@v3
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ecom-database-stage-${{ github.sha }}
+          IMAGE_TAG: defi-central-stage-${{ github.sha }}
         with:
           context: .
           push: true
@@ -82,7 +49,7 @@ jobs:
 
   Deploy:
     runs-on: ubuntu-latest
-    environment: prod
+    environment: production
     needs: Build
 
     steps:
@@ -128,274 +95,7 @@ jobs:
             PG_USER=${{ secrets.RDS_STAGING_USER }}
             PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
             PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      - name: Deploy to Amazon ECS Scheduled Tasks (Wallet)
-        id: scheduled-task-deploy-wallet
-        uses: airfordable/ecs-deploy-task-definition-to-scheduled-task@v2.1.0
-        with:
-          cluster: ${{ secrets.ECS_CLUSTER }}
-          rule-prefix: ${{ env.EVENTS_RULE_PREFIX_WALLET }}
-          task-definition: ${{ steps.task-def-wallet.outputs.task-definition }}
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      ### Updates ecom-database-conversion-stage
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def-conversion
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION_CONVERSION }}
-          container-name: ${{ env.CONTAINER_NAME_CONVERSION }}
-          image: ${{ needs.Build.outputs.image }}
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      - name: Deploy to Amazon ECS Scheduled Tasks (Conversion)
-        id: scheduled-task-deploy-conversion
-        uses: airfordable/ecs-deploy-task-definition-to-scheduled-task@v2.1.0
-        with:
-          cluster: ${{ secrets.ECS_CLUSTER }}
-          rule-prefix: ${{ env.EVENTS_RULE_PREFIX_CONVERSION }}
-          task-definition: ${{ steps.task-def-conversion.outputs.task-definition }}
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      ### Updates ecom-database-eth-secondary
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def-eth-secondary
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION_ETH_SECONDARY }}
-          container-name: ${{ env.CONTAINER_NAME_ETH_SECONDARY }}
-          image: ${{ needs.Build.outputs.image }}
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      - name: Deploy to Amazon ECS Scheduled Tasks (ETH_SECONDARY)
-        id: scheduled-task-deploy-eth-secondary
-        uses: airfordable/ecs-deploy-task-definition-to-scheduled-task@v2.1.0
-        with:
-          cluster: ${{ secrets.ECS_CLUSTER }}
-          rule-prefix: ${{ env.EVENTS_RULE_PREFIX_ETH_SECONDARY }}
-          task-definition: ${{ steps.task-def-eth-secondary.outputs.task-definition }}
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-
-      ### Updates ecom-database-stripe_processor
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def-stripe_processor
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION_STRIPE_PROCESSOR }}
-          container-name: ${{ env.CONTAINER_NAME_STRIPE_PROCESSOR }}
-          image: ${{ needs.Build.outputs.image }}
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      - name: Deploy to Amazon ECS Scheduled Tasks (STRIPE_PROCESSOR)
-        id: scheduled-task-deploy-stripe_processor
-        uses: airfordable/ecs-deploy-task-definition-to-scheduled-task@v2.1.0
-        with:
-          cluster: ${{ secrets.ECS_CLUSTER }}
-          rule-prefix: ${{ env.EVENTS_RULE_PREFIX_STRIPE_PROCESSOR }}
-          task-definition: ${{ steps.task-def-stripe_processor.outputs.task-definition }}    
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
             BASE_URL=${{ secrets.BASE_URL }}
             DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
             ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
             POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      ### Updates ecom-database-wax-secondary
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def-wax-secondary
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION_WAX_SECONDARY }}
-          container-name: ${{ env.CONTAINER_NAME_WAX_SECONDARY }}
-          image: ${{ needs.Build.outputs.image }}
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      - name: Deploy to Amazon ECS Scheduled Tasks (WAX_SECONDARY)
-        id: scheduled-task-deploy-wax-secondary
-        uses: airfordable/ecs-deploy-task-definition-to-scheduled-task@v2.1.0
-        with:
-          cluster: ${{ secrets.ECS_CLUSTER }}
-          rule-prefix: ${{ env.EVENTS_RULE_PREFIX_STRIPE_PROCESSOR }}
-          task-definition: ${{ steps.task-def-wax-secondary.outputs.task-definition }}    
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
-            POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
-
-      ### Updates ecom-database-platform-stage
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def-platform
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION_PLATFORM }}
-          container-name: ${{ env.CONTAINER_NAME_PLATFORM }}
-          image: ${{ needs.Build.outputs.image }}
-          environment-variables: |
-            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            PG_HOST=${{ secrets.RDS_STAGING_HOST }}
-            PG_DB=${{ secrets.RDS_PG_DB }}
-            PG_USER=${{ secrets.RDS_STAGING_USER }}
-            PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
-            PG_PORT=${{ secrets.PG_PORT }}
-            BASE_URL=${{ secrets.BASE_URL }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
-
-      - name: Deploy to Amazon ECS Scheduled Tasks (Platform)
-        id: scheduled-task-deploy-platform
-        uses: airfordable/ecs-deploy-task-definition-to-scheduled-task@v2.1.0
-        with:
-          cluster: ${{ secrets.ECS_CLUSTER }}
-          rule-prefix: ${{ env.EVENTS_RULE_PREFIX_PLATFORM }}
-          task-definition: ${{ steps.task-def-platform.outputs.task-definition }}
