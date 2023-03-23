@@ -13,9 +13,15 @@ from datetime import datetime
 from app.models.Protocol import Protocol
 from app.models.Financial import Financial
 from sqlmodel import select
+import requests
 
 
-PROTOCOLS = ["yearn-finance", "makerdao", "compound", "dydx", "aave"]
+# PROTOCOLS = ["yearn-finance", "makerdao", "compound", "dydx", "aave"]
+
+
+protocols_response = requests.get("https://api.llama.fi/protocols").json()
+
+protocols = [protocol["name"] for protocol in protocols_response]
 
 
 logging.basicConfig(
@@ -158,7 +164,6 @@ async def load(data: dict, fees: bool = False):
 
         created_at = datetime.utcnow()
         
-        
         protocol = Protocol(
             category=category,
             company_url=company_url,
@@ -239,7 +244,7 @@ async def main(protocols, fees):
 if __name__ == "__main__":
     start = time.time()
 
-    asyncio.run(main(PROTOCOLS, fees=True))
+    asyncio.run(main(protocols, fees=False))
 
     end = time.time()
 

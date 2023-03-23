@@ -20,7 +20,6 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
-
 @asynccontextmanager
 async def get_async_session() -> AsyncSession:
     async_session = sessionmaker(
