@@ -328,16 +328,8 @@ jobs:
             PG_USER=${{ secrets.RDS_STAGING_USER }}
             PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
             PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
             BASE_URL=${{ secrets.BASE_URL }}
             DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
             ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
             POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
 
@@ -357,16 +349,6 @@ jobs:
             PG_USER=${{ secrets.RDS_STAGING_USER }}
             PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
             PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
-            BASE_URL=${{ secrets.BASE_URL }}
-            DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
             ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
             POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
 
@@ -385,16 +367,8 @@ jobs:
             PG_USER=${{ secrets.RDS_STAGING_USER }}
             PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
             PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
             BASE_URL=${{ secrets.BASE_URL }}
             DFUSE_API_KEY=${{ secrets.DFUSE_API_KEY }}
-            WAX_URL=${{ secrets.WAX_URL }}
-            OPEN_SEA_KEY=${{ secrets.OPEN_SEA_KEY }}
-            STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
-            STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
             ETH_ALCHEMY_URL=${{ secrets.ETH_ALCHEMY_URL }} 
             POLYGON_ALCHEMY_URL=${{ secrets.POLYGON_ALCHEMY_URL }}
 
@@ -414,11 +388,6 @@ jobs:
             PG_USER=${{ secrets.RDS_STAGING_USER }}
             PG_PASSWORD=${{ secrets.RDS_STAGING_PASSWORD }}
             PG_PORT=${{ secrets.PG_PORT }}
-            TEST_DB_USER=${{ secrets.TEST_DB_USER }}
-            TEST_DB_HOST=${{ secrets.TEST_DB_HOST }}
-            TEST_DB_PASSWORD=${{ secrets.TEST_DB_PASSWORD }}
-            TEST_DB_PORT=${{ secrets.TEST_DB_PORT }}
-            TEST_DB_NAME=${{ secrets.TEST_DB_NAME}}
             BASE_URL=${{ secrets.BASE_URL }}
             STRIPE_PI_API_KEY=${{ secrets.STRIPE_PI_API_KEY }}
             STRIPE_BT_API_KEY=${{ secrets.STRIPE_BT_API_KEY }}
