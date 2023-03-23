@@ -90,7 +90,7 @@ async def send_image(ctx, channel_id: int, image_path="tvl_over_time.png"):
 @bot.command()
 @commands.is_owner()
 async def stop_bot(ctx):
-    log.inf("Stopping bot...")
+    log.info("Stopping bot...")
     await bot.close()
 
 
