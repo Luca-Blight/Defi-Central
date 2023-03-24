@@ -3,7 +3,6 @@ from sqlmodel import SQLModel, Field, Column, Integer, String, DateTime, Foreign
 
 
 class Investor(SQLModel, table=True):
-
     __tablename__ = "investor"
 
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)

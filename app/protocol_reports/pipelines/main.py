@@ -36,9 +36,12 @@ log = logging.getLogger()
 
 async def get_protocol(protocol: str, fees: bool = True):
     async with httpx.AsyncClient(timeout=10) as client:
-        
-        response = await client.get(f"https://api.llama.fi/protocol/{protocol}") if not fees else await client.get(f"https://api.llama.fi/summary/fees/{protocol}")
-        
+        response = (
+            await client.get(f"https://api.llama.fi/protocol/{protocol}")
+            if not fees
+            else await client.get(f"https://api.llama.fi/summary/fees/{protocol}")
+        )
+
         try:
             if (
                 response.status_code == 200
@@ -60,7 +63,7 @@ async def get_protocol(protocol: str, fees: bool = True):
 async def get_protocol_fees(protocol: str):
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.get(f"https://api.llama.fi/summary/fees/{protocol}")
-        
+
         try:
             if (
                 response.status_code == 200
@@ -78,8 +81,8 @@ async def get_protocol_fees(protocol: str):
             )
     return None
 
+
 async def transform(data: dict, fees: bool = False) -> dict:
-    
     if fees:
         pass
     else:
@@ -124,24 +127,30 @@ async def load(data: dict, fees: bool = False):
     if fees:
         async with get_async_session() as session:
             # Retrieve the protocol id from the database and add it to the financial object
-            
+
             statement = select(Protocol).where(Protocol.name == name)
             existing_protocol = await session.exec(statement)
             existing_protocol = existing_protocol.one()
-            
 
             for financial in list_of_financials:
                 financial.protocol_id = existing_protocol.id
-                financial.date = financial.date.astimezone(timezone.utc).replace(tzinfo=None)
-                statement = select(Financial).where((Financial.date == financial.date)  & (Financial.protocol_id == financial.protocol_id))
+                financial.date = financial.date.astimezone(timezone.utc).replace(
+                    tzinfo=None
+                )
+                statement = select(Financial).where(
+                    (Financial.date == financial.date)
+                    & (Financial.protocol_id == financial.protocol_id)
+                )
                 existing_financial = await session.exec(statement)
                 existing_financial = existing_financial.one_or_none()
-                
+
                 if existing_financial:
                     existing_financial.tvl = financial.tvl
                     existing_financial.fees = financial.fees
                     await session.commit()
-                    log.info(f"Updated financial data for {name} on date {financial.date}")
+                    log.info(
+                        f"Updated financial data for {name} on date {financial.date}"
+                    )
 
     else:
         (
@@ -163,7 +172,7 @@ async def load(data: dict, fees: bool = False):
         )
 
         created_at = datetime.utcnow()
-        
+
         protocol = Protocol(
             category=category,
             company_url=company_url,
@@ -172,11 +181,11 @@ async def load(data: dict, fees: bool = False):
             name=name,
             parent_protocol=parent_protocol,
             twitter_handle=twitter_handle,
-            created_at=created_at
+            created_at=created_at,
         )
         async with get_async_session() as session:
-        # Check if the protocol already exists in the database, if not, add it
-        
+            # Check if the protocol already exists in the database, if not, add it
+
             statement = select(Protocol).where(Protocol.name == name)
             existing_protocol = await session.exec(statement)
             existing_protocol = existing_protocol.one()
@@ -189,35 +198,46 @@ async def load(data: dict, fees: bool = False):
                 log.info(f"{name} already exists in the protocol table")
 
         list_of_financials = []
-        
-        tvl_data: list[dict] = data['tvl']
-        
+
+        tvl_data: list[dict] = data["tvl"]
+
         for financial_data in tvl_data:
-            financial_obj = Financial(tvl=financial_data['totalLiquidityUSD'], date=financial_data['date'], created_at=created_at)
+            financial_obj = Financial(
+                tvl=financial_data["totalLiquidityUSD"],
+                date=financial_data["date"],
+                created_at=created_at,
+            )
             list_of_financials.append(financial_obj)
-            
-            
+
         async with get_async_session() as session:
             # Retrieve the protocol id from the database and add it to the financial object
-            
+
             statement = select(Protocol).where(Protocol.name == name)
             existing_protocol = await session.exec(statement)
             existing_protocol = existing_protocol.one()
-            
 
             for financial in list_of_financials:
                 financial.protocol_id = existing_protocol.id
-                financial.date = financial.date.astimezone(timezone.utc).replace(tzinfo=None)
-                statement = select(Financial).where((Financial.date == financial.date)  & (Financial.protocol_id == financial.protocol_id))
+                financial.date = financial.date.astimezone(timezone.utc).replace(
+                    tzinfo=None
+                )
+                statement = select(Financial).where(
+                    (Financial.date == financial.date)
+                    & (Financial.protocol_id == financial.protocol_id)
+                )
                 existing_financial = await session.exec(statement)
                 existing_financial = existing_financial.one_or_none()
-                
+
                 if not existing_financial:
                     session.add(financial)
                     await session.commit()
-                    log.info(f"Loaded financial data for {name} on date {financial.date}")
+                    log.info(
+                        f"Loaded financial data for {name} on date {financial.date}"
+                    )
                 else:
-                    log.info(f"Financial data for {name} on date {financial.date} already exists in the financial table")
+                    log.info(
+                        f"Financial data for {name} on date {financial.date} already exists in the financial table"
+                    )
 
 
 async def main(protocols, fees):
@@ -228,7 +248,6 @@ async def main(protocols, fees):
         *get_tasks
     )  # Schedule tasks and execute them concurrently
     task_get_results = [result for result in task_get_results if result is not None]
-    breakpoint()
 
     transform_tasks: list[Coroutine] = [
         transform(result) for result in task_get_results
@@ -249,11 +268,3 @@ if __name__ == "__main__":
     end = time.time()
 
     log.info(f"finished all protocols in {end - start} seconds")
-
-
-# In this step, we create a list of coroutines by calling the asynchronous function get_protocol for each protocol.
-# At this stage, the coroutines are not yet executed, as they are simply scheduled to be run asynchronously.
-# These coroutines will be executed concurrently when we use asyncio.gather in the next step (step 5b).
-
-
-# tvl, top 10

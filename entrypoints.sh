@@ -1,4 +1,4 @@
-python app/src/account_reports/eth_main.py
-python app/src/account_reports/main.py
-python app/src/protocol_reports/main.py
+python app/protocol_reports/pipelines/main.py
+python app/protocol_reports/charts/main.py
+python app/bots/discord_bot.py
 

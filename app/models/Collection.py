@@ -12,7 +12,6 @@ class CurrencyType(enum.Enum):
 
 
 class Collection(SQLModel, table=True):
-
     __tablename__ = "collection"
 
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)

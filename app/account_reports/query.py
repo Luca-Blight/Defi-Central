@@ -32,7 +32,6 @@ Query = """
 
 
 def query_update(currency_column: str) -> str:
-
     query: str = f"""UPDATE conversion_rate cr
                 SET {currency_column} = tcr.{currency_column}
                 FROM  temp_conversion_rate tcr

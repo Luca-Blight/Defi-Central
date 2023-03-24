@@ -1,5 +1,6 @@
 from pydantic import BaseSettings
 
+
 # to be modified
 class Settings(BaseSettings):
     # Base

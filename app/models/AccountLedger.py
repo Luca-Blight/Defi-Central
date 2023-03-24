@@ -4,7 +4,6 @@ from sqlalchemy import Column, Integer, String, DateTime, Float
 
 
 class AccountLedger(SQLModel, table=True):
-
     __tablename__ = "account_ledger"
 
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)

@@ -48,11 +48,11 @@ contract_addresses = list(contract_table.keys())
 wallet_names = list(account_table.values())
 wallet_addresses = list(account_table.keys())
 
+
 # if wallet not in contract names, then it is a user wallet
 def map_stream(
     stream: list, wallet_id: str, wallet_account: str, currency_type: str
 ) -> List[dict]:
-
     attributes = [
         "wallet_id",
         "from_wallet",
@@ -154,7 +154,6 @@ def map_stream(
 
 
 def extract_stream(account: object, idx: int) -> pd.DataFrame:
-
     eth_walletledger_records = []
     eth_wallet_records = []
 
@@ -247,7 +246,6 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
         pass
 
     if mapped_data:
-
         mapped_data: List[dict] = sorted(mapped_data, key=lambda x: x["block_date"])
 
         # logging.info(f"mapped_data: {mapped_data}")
@@ -274,7 +272,6 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
 
         return wl_df, w_df
     else:
-
         wl_df = pd.DataFrame(mapped_data)
 
         w_df = pd.DataFrame(eth_wallet_records)
@@ -285,13 +282,11 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
 def load_eth_stream(
     account: str, wl_transactions: pd.DataFrame, w_transactions: pd.DataFrame
 ) -> pd.DataFrame:
-
     if wl_transactions.empty:
         log.info(
             f"Because there are 0 transactions with {account.wallet_id}, this load has been stopped"
         )
     else:
-
         # drop duplicates to prevent redundant transactions from being recorded, where multiple mints are concerned
         account_ledger_records: List[dict] = (
             wl_transactions[
@@ -312,7 +307,6 @@ def load_eth_stream(
         )
 
         with session.no_autoflush:
-
             insert_stmt = insert(AccountLedger).values(account_ledger_records)
 
             results = session.execute(insert_stmt).rowcount
@@ -335,7 +329,6 @@ def load_eth_stream(
         ].to_dict("records")[0]
 
         with session:
-
             account: str = wallet_record["account"]
             account = (
                 session.query(Account)
@@ -360,9 +353,7 @@ def load_eth_stream(
 
 
 def run_eth_pipeline(account_addresses: List[dict]):
-
     for idx, account in enumerate(account_addresses):
-
         time.sleep(3)
 
         log.info(f"running wallet {account} of account {account.account}, index {idx}")
@@ -375,7 +366,6 @@ def run_eth_pipeline(account_addresses: List[dict]):
 
 
 if __name__ == "__main__":
-
     log.info("eth pipeline started")
     start = time.time()
 

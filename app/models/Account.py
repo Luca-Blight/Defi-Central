@@ -4,7 +4,6 @@ from sqlmodel import Field, SQLModel
 
 
 class Account(SQLModel, table=True):
-
     __tablename__ = "account"
 
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)

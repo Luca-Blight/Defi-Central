@@ -2,11 +2,11 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
 
+
 class Protocol(SQLModel, table=True):
-    
-    id: Optional[int] = Field(default=None, primary_key=True) 
+    id: Optional[int] = Field(default=None, primary_key=True)
     parent_protocol: Optional[str]
-    name: Optional[str] 
+    name: Optional[str]
     contract_address: Optional[str]
     symbol: Optional[str]
     category: Optional[str]

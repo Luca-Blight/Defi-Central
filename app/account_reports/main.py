@@ -67,7 +67,6 @@ def create_client(endpoint: str) -> object:
 def map_stream(
     stream: object, wallet_id: str, wallet_account: str, currency_type: str, idx: int
 ) -> List[dict]:
-
     attributes = [
         "cursor",
         "account",
@@ -96,7 +95,6 @@ def map_stream(
             print("An error occurred")
             print(rawResult.errors)
         else:
-
             result = json.loads(rawResult.data)
 
             for data in result["searchTransactionsForward"]["trace"]["matchingActions"]:
@@ -156,7 +154,6 @@ def map_stream(
 
 
 def extract_stream(wallet: object, idx: int) -> pd.DataFrame:
-
     client = create_client(os.environ.get("WAX_URL"))
 
     walletledger_records = []
@@ -191,7 +188,6 @@ def extract_stream(wallet: object, idx: int) -> pd.DataFrame:
             pass
 
         if mapped_data:
-
             # sorts by block_date, we want the last(most recent) record for the wallet table
             mapped_data = sorted(mapped_data, key=lambda x: x["block_date"])
 
@@ -212,7 +208,6 @@ def extract_stream(wallet: object, idx: int) -> pd.DataFrame:
             pass
 
         if len(walletledger_records) > 1:
-
             wl_df = pd.DataFrame(list(chain.from_iterable(walletledger_records)))
             w_df = pd.DataFrame(wallet_records)
             return wl_df, w_df
@@ -228,7 +223,6 @@ def load_stream(
     wallet: str,
     current_counter: int,
 ) -> pd.DataFrame:
-
     if wl_transactions.empty:
         with session:
             session.query(Wallet).update({Wallet.counter: current_counter})
@@ -236,7 +230,6 @@ def load_stream(
                 f"counter for all wallets has been updated with {current_counter}, no records from this wallet:{wallet.wallet_id} of account {wallet.account}"
             )
     else:
-
         wallet_record = w_transactions[
             [
                 "wallet_id",
@@ -273,7 +266,6 @@ def load_stream(
         )  # add account
 
         with session:
-
             account = wallet_record["account"]
 
             wallet_result = (
@@ -311,7 +303,6 @@ def load_stream(
             )
 
         with session:
-
             session.query(Wallet).update({Wallet.counter: wallet_record["counter"]})
 
             session.commit()
@@ -321,7 +312,6 @@ def load_stream(
 
 
 def initiate(wallets: List[WalletAddress], starting_counter: int) -> str:
-
     for idx, wallet in enumerate(wallets[starting_counter:]):
         time.sleep(5)
         current_counter = starting_counter + idx
@@ -330,7 +320,6 @@ def initiate(wallets: List[WalletAddress], starting_counter: int) -> str:
         load_stream(wl_stream, w_stream, wallet, current_counter)
 
         if (len(wallets) - 1) == current_counter:
-
             with session:
                 session.query(Wallet).update({Wallet.counter: 0})
                 session.commit()
@@ -343,7 +332,6 @@ def initiate(wallets: List[WalletAddress], starting_counter: int) -> str:
 
 
 def run_dfuse_pipeline(wallets: List[WalletAddress]):
-
     """
 
     This pipeline will extract,map/transform, and load each wallet.
@@ -361,14 +349,12 @@ def run_dfuse_pipeline(wallets: List[WalletAddress]):
         initiate(wallets, starting_counter)
 
     else:
-
         starting_counter = int(initial_table["counter"][0])
 
         initiate(wallets, starting_counter)
 
 
 def update_wallet_report_view():
-
     walletledger_table = pd.read_sql(
         "SELECT DISTINCT wallet_id,to_wallet,from_wallet,memo,CAST(quantity as float),currency,transaction_hash,block_date,block_number FROM wallet_ledger;",
         engine,

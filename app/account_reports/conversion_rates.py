@@ -27,7 +27,6 @@ v3 = BittrexV3(
 
 
 def merge_with(minutes_df: pd.DataFrame, prefix: str, engine=engine):
-
     current_table = pd.read_sql(f"SELECT * FROM conversion_rate", con=engine)
 
     conversion_rate_column: str = f"{prefix}_conversion_rate"
@@ -71,7 +70,6 @@ def merge_with(minutes_df: pd.DataFrame, prefix: str, engine=engine):
 def get2020_conv_rates(
     MARKET_NAME: str, prefix: str, months: int = 12, engine=engine
 ) -> str:
-
     all_minutes = []
 
     try:
@@ -110,7 +108,6 @@ def get2020_conv_rates(
 def get2021_conv_rates(
     MARKET_NAME: str, prefix: str, months: int = 12, engine=engine
 ) -> str:
-
     all_minutes = []
 
     try:
@@ -149,7 +146,6 @@ def get2021_conv_rates(
 def get2022_conv_rates(
     MARKET_NAME: str, prefix: str, months: int = 0, engine=engine
 ) -> str:
-
     end_of_month = datetime.now() - timedelta(days=1)
 
     current_day: int = datetime.now().day
@@ -225,7 +221,6 @@ def get2022_conv_rates(
                         f"Table is up to date with {current_month}-{prev_day}-{current_year} {prefix} conversion rates"
                     )
     else:
-
         result: List[dict] = v3.get_historical_candles(
             market=MARKET_NAME,
             candle_interval=CandleInterval.MINUTE_1,
@@ -237,7 +232,6 @@ def get2022_conv_rates(
         minutes_df = pd.DataFrame(list(chain.from_iterable(all_minutes)))
 
         if prefix == "eth":
-
             conversion_rate: pd.DataFrame = minutes_df[["startsAt", "close"]].rename(
                 columns={"startsAt": "block_date", "close": f"{prefix}_conversion_rate"}
             )
@@ -252,7 +246,6 @@ def get2022_conv_rates(
             )
 
         else:
-
             merge_with(minutes_df, prefix, engine)
             return print(
                 f"Table is up to date with {current_month}-{prev_day}-{current_year} {prefix} conversion rates"
@@ -262,7 +255,6 @@ def get2022_conv_rates(
 
 
 async def get_current_conv_rates(MARKET_NAME: str, months: int = 12, engine=engine):
-
     prefix: str = MARKET_NAME.split("-")[1].lower()
 
     df_2020 = pd.read_sql(
@@ -287,6 +279,5 @@ async def get_current_conv_rates(MARKET_NAME: str, months: int = 12, engine=engi
 
 
 if __name__ == "__main__":
-
     asyncio.run(get_current_conv_rates("USD-ETH"))
     asyncio.run(get_current_conv_rates("USD-MATIC"))
