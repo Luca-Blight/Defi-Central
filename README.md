@@ -6,10 +6,14 @@ The purpose of this project is to provide a central location for all DeFi data. 
 
 # Data Sources
 
-### Defi Llama
 
-### Bittrex
-### Messari
+[Defi Llama](https://defillama.com/)
+
+[Bittrex](https://bittrex.com/)
+
+[Messari](https://messari.io/)
+
+
 
 # API
 

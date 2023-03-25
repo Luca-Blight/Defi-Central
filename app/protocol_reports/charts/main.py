@@ -25,7 +25,7 @@ def get_data(protocol_ids):
 
 
 def billions_formatter(x, pos):
-    return f"{x * 1e-9:.0f}M"
+    return f"{x * 1e-9:.0f}B"
 
 
 protocol_ids = [1, 2, 3]
