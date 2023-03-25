@@ -1,12 +1,17 @@
-# On-Chain-Pipeline
+# Defi-Central
+
+The purpose of this project is to provide a central location for all DeFi data. This will be done by aggregating data from various sources and providing a single API endpoint. This will allow for easy integration into other projects. The project is currently in development and is not ready for production use yet.  Additionally, bot scripts are provided for integration into Discord and Twitter. Twitter API approval is pending.
 
 
 
-## TODO
+# Data Sources
 
-### ASYNC refactor
-### Pipeline from Defi Llama
-### Twitter Notifications
+### Defi Llama
+
+### Bittrex
+### Messari
+
+# API
 
 
 
@@ -14,7 +19,7 @@
 
 Total Value Locked (TVL) is a metric used in decentralized finance (DeFi) to measure the amount of assets locked in various DeFi protocols. It helps assess the popularity and growth of DeFi projects. The formula for calculating TVL varies depending on the specific protocol, but in general, it can be represented as:
 
-TVL = Σ (Token_Quantity * Price)
+TVL = Σ (Token_Quantity \* Price)
 
 where:
 
@@ -23,15 +28,12 @@ Token_i represents the quantity of token i locked in the protocol
 Price_i represents the current market price of token i in a common currency (typically USD)
 TVL is calculated by multiplying the quantity of each locked token by its corresponding market price and summing the products for all tokens involved. This provides an estimate of the total value of all assets locked within the DeFi protocol. Note that this is a simplified version of the formula, and different DeFi protocols may have unique ways of calculating TVL based on their specific use cases or requirements.
 
-
 # TO DO
-
 
 ### Finish Models
 
-### Webhook Notifications
+### Twitter Bot
 
 ### ASYNC refactor of older code
 
-### Frontend
-
+### Frontend?
