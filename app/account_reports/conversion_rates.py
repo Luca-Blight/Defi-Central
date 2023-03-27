@@ -2,18 +2,26 @@ import asyncio
 import calendar
 import pandas as pd
 import os
+import logging
 
 from bittrex_api import *
 from bittrex_api.models.v3.candle_interval import CandleInterval
 from models.ConversionRate import ConversionRate
 from datetime import datetime, timedelta
 from query import query_update
-from database.database import engine
+from database.main import async_engine
 from itertools import chain
 from typing import List
 
 
-####CUT THIS DOWN TO 1 YEAR####, Make ASYNC if possible
+logging.basicConfig(
+    level=logging.INFO,
+    format="{asctime} {levelname} {message}",
+    style="{",
+    datefmt="%m-%d-%y %H:%M:%S",
+)
+
+log = logging.getLogger()
 
 ### USE COINMARKETCAP API TO GET CONVERSION RATES ###
 v3 = BittrexV3(
@@ -26,7 +34,7 @@ v3 = BittrexV3(
 )
 
 
-def merge_with(minutes_df: pd.DataFrame, prefix: str, engine=engine):
+async def merge_with(minutes_df: pd.DataFrame, prefix: str, engine=async_engine):
     current_table = pd.read_sql(f"SELECT * FROM conversion_rate", con=engine)
 
     conversion_rate_column: str = f"{prefix}_conversion_rate"
@@ -67,21 +75,21 @@ def merge_with(minutes_df: pd.DataFrame, prefix: str, engine=engine):
     return current_table
 
 
-def get2020_conv_rates(
-    MARKET_NAME: str, prefix: str, months: int = 12, engine=engine
+async def get_conv_rates(
+    MARKET_NAME: str, prefix: str, months: int = 12, engine=async_engine, year: int = 2020 
 ) -> str:
     all_minutes = []
 
     try:
         for month in range(months):
             month: int = month + 1
-            days = calendar.monthrange(2020, month)
+            days = calendar.monthrange(year, month)
             for day in range(days[1]):
                 day: int = day + 1
                 result = v3.get_historical_candles(
                     market=MARKET_NAME,
                     candle_interval=CandleInterval.MINUTE_1,
-                    year=2020,
+                    year=year,
                     month=month,
                     day=day,
                 )
@@ -92,59 +100,22 @@ def get2020_conv_rates(
                 columns={"startsAt": "block_date", "close": f"{prefix}_conversion_rate"}
             )
             conversion_rate.to_sql(
-                con=engine,
+                con=async_engine,
                 name=ConversionRate.__tablename__,
                 if_exists="append",
                 index=False,
             )
-            return print(f"Table has been updated with {prefix} 2020 conversion rates")
+            return log.info(f"Table has been updated with {prefix} {year} conversion rates")
         else:
-            merge_with(minutes_df, prefix, engine)
-            return print(f"Table has been updated with {prefix} 2020 conversion rates")
+            await merge_with(minutes_df, prefix, async_engine)
+            log.info(f"Table has been updated with {prefix} {year} conversion rates")
     except KeyError:
-        print(month, day, all_minutes)
+        log.info(month, day, all_minutes)
 
 
-def get2021_conv_rates(
-    MARKET_NAME: str, prefix: str, months: int = 12, engine=engine
-) -> str:
-    all_minutes = []
 
-    try:
-        for month in range(months):
-            month: int = month + 1
-            days: int = calendar.monthrange(2021, month)
-            for day in range(days[1]):
-                day: int = day + 1
-                result: List[dict] = v3.get_historical_candles(
-                    market=MARKET_NAME,
-                    candle_interval=CandleInterval.MINUTE_1,
-                    year=2021,
-                    month=month,
-                    day=day,
-                )
-                all_minutes.append(result)
-        minutes_df = pd.DataFrame(list(chain.from_iterable(all_minutes)))
-        if prefix == "eth":
-            conversion_rate: pd.DataFrame = minutes_df[["startsAt", "close"]].rename(
-                columns={"startsAt": "block_date", "close": f"{prefix}_conversion_rate"}
-            )
-            conversion_rate.to_sql(
-                con=engine,
-                name=ConversionRate.__tablename__,
-                if_exists="append",
-                index=False,
-            )
-            return print(f"Table has been updated with {prefix} 2021 conversion rates")
-        else:
-            merge_with(minutes_df, prefix, engine)
-            return print(f"Table has been updated with {prefix} 2021 conversion rates")
-    except KeyError:
-        print(month, day, all_minutes)
-
-
-def get2022_conv_rates(
-    MARKET_NAME: str, prefix: str, months: int = 0, engine=engine
+async def get_recent_conv_rates(
+    MARKET_NAME: str, prefix: str, months: int = 0, engine=async_engine
 ) -> str:
     end_of_month = datetime.now() - timedelta(days=1)
 
@@ -158,7 +129,7 @@ def get2022_conv_rates(
 
     df_current_year = pd.read_sql(
         f"SELECT block_date, {prefix}_conversion_rate FROM conversion_rate WHERE EXTRACT(YEAR FROM block_date) = {current_year}",
-        con=engine,
+        con=async_engine,
     )
 
     all_minutes = []
@@ -206,18 +177,18 @@ def get2022_conv_rates(
                         }
                     )
                     Conversion_Rate.to_sql(
-                        con=engine,
+                        con=async_engine,
                         name=ConversionRate.__tablename__,
                         if_exists="append",
                         index=False,
                     )
-                    return print(
+                    return log.info(
                         f"Table is up to date with {current_month}-{prev_day}-{current_year} {prefix} conversion rates"
                     )
 
                 else:
-                    merge_with(minutes_df, prefix, engine)
-                    return print(
+                    await merge_with(minutes_df, prefix, async_engine)
+                    return log.info(
                         f"Table is up to date with {current_month}-{prev_day}-{current_year} {prefix} conversion rates"
                     )
     else:
@@ -236,30 +207,30 @@ def get2022_conv_rates(
                 columns={"startsAt": "block_date", "close": f"{prefix}_conversion_rate"}
             )
             conversion_rate.to_sql(
-                con=engine,
+                con=async_engine,
                 name=ConversionRate.__tablename__,
                 if_exists="append",
                 index=False,
             )
-            return print(
+            return log.info(
                 f"Table is up to date with {current_month}-{prev_day}-{current_year} {prefix} conversion rates"
             )
 
         else:
-            merge_with(minutes_df, prefix, engine)
-            return print(
+            await merge_with(minutes_df, prefix, async_engine)
+            return log.info(
                 f"Table is up to date with {current_month}-{prev_day}-{current_year} {prefix} conversion rates"
             )
 
     pass
 
 
-async def get_current_conv_rates(MARKET_NAME: str, months: int = 12, engine=engine):
+async def get_current_conv_rates(MARKET_NAME: str, months: int = 12, engine=async_engine):
     prefix: str = MARKET_NAME.split("-")[1].lower()
 
     df_2020 = pd.read_sql(
         f"SELECT block_date,{prefix}_conversion_rate FROM conversion_rate WHERE EXTRACT(YEAR FROM block_date) = 2020 ORDER BY block_date DESC",
-        con=engine,
+        con=async_engine,
     )
     df_2021 = pd.read_sql(
         f"SELECT block_date,{prefix}_conversion_rate FROM conversion_rate WHERE EXTRACT(YEAR FROM block_date) = 2021",
@@ -267,15 +238,15 @@ async def get_current_conv_rates(MARKET_NAME: str, months: int = 12, engine=engi
     )
 
     if (df_2020.empty or df_2020.iloc[0][1] == None) and prefix != "matic":
-        get2020_conv_rates(MARKET_NAME, prefix, months, engine)
+        await get_conv_rates(MARKET_NAME, prefix, months, async_engine, year = 2020)
         if df_2021.empty or df_2021.iloc[-1][1] == None:
-            get2021_conv_rates(MARKET_NAME, prefix, months, engine)
+            await get_conv_rates(MARKET_NAME, prefix, months, async_engine, year = 2021)
         else:
             pass
     else:
         pass
 
-    get2022_conv_rates(MARKET_NAME, prefix, engine=engine)
+    await get_recent_conv_rates(MARKET_NAME, prefix, engine=async_engine)
 
 
 if __name__ == "__main__":
