@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from query import query_update
 from database.main import async_engine
 from itertools import chain
-from typing import List
 
 
 logging.basicConfig(
@@ -76,7 +75,11 @@ async def merge_with(minutes_df: pd.DataFrame, prefix: str, engine=async_engine)
 
 
 async def get_conv_rates(
-    MARKET_NAME: str, prefix: str, months: int = 12, engine=async_engine, year: int = 2020 
+    MARKET_NAME: str,
+    prefix: str,
+    months: int = 12,
+    engine=async_engine,
+    year: int = 2020,
 ) -> str:
     all_minutes = []
 
@@ -105,13 +108,14 @@ async def get_conv_rates(
                 if_exists="append",
                 index=False,
             )
-            return log.info(f"Table has been updated with {prefix} {year} conversion rates")
+            return log.info(
+                f"Table has been updated with {prefix} {year} conversion rates"
+            )
         else:
             await merge_with(minutes_df, prefix, async_engine)
             log.info(f"Table has been updated with {prefix} {year} conversion rates")
     except KeyError:
         log.info(month, day, all_minutes)
-
 
 
 async def get_recent_conv_rates(
@@ -141,7 +145,7 @@ async def get_recent_conv_rates(
                 days = calendar.monthrange(current_year, month)
                 for day in range(days[1]):
                     day: int = day + 1
-                    result: List[dict] = v3.get_historical_candles(
+                    result: list[dict] = v3.get_historical_candles(
                         market=MARKET_NAME,
                         candle_interval=CandleInterval.MINUTE_1,
                         year=current_year,
@@ -192,7 +196,7 @@ async def get_recent_conv_rates(
                         f"Table is up to date with {current_month}-{prev_day}-{current_year} {prefix} conversion rates"
                     )
     else:
-        result: List[dict] = v3.get_historical_candles(
+        result: list[dict] = v3.get_historical_candles(
             market=MARKET_NAME,
             candle_interval=CandleInterval.MINUTE_1,
             year=current_year,
@@ -225,7 +229,9 @@ async def get_recent_conv_rates(
     pass
 
 
-async def get_current_conv_rates(MARKET_NAME: str, months: int = 12, engine=async_engine):
+async def get_current_conv_rates(
+    MARKET_NAME: str, months: int = 12, engine=async_engine
+):
     prefix: str = MARKET_NAME.split("-")[1].lower()
 
     df_2020 = pd.read_sql(
@@ -238,9 +244,9 @@ async def get_current_conv_rates(MARKET_NAME: str, months: int = 12, engine=asyn
     )
 
     if (df_2020.empty or df_2020.iloc[0][1] == None) and prefix != "matic":
-        await get_conv_rates(MARKET_NAME, prefix, months, async_engine, year = 2020)
+        await get_conv_rates(MARKET_NAME, prefix, months, async_engine, year=2020)
         if df_2021.empty or df_2021.iloc[-1][1] == None:
-            await get_conv_rates(MARKET_NAME, prefix, months, async_engine, year = 2021)
+            await get_conv_rates(MARKET_NAME, prefix, months, async_engine, year=2021)
         else:
             pass
     else:

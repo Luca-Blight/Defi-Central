@@ -1,17 +1,19 @@
-from database.database import Base
-from sqlmodel import SQLModel, Field, Column, Integer, String, DateTime, ForeignKey
+from sqlmodel import SQLModel, Field
+from typing import Optional
+from datetime import datetime
+from sqlmodel import Field, SQLModel, Column, DateTime, Float
 
 
 class Raise(SQLModel, table=True):
     __tablename__ = "raise"
 
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    name = Column(String(255), nullable=False)
-    round = Column(String(255), nullable=True)
-    amount = Column(String(255), nullable=True)
-    category = Column(String(255), nullable=True)
-    source = Column(DateTime, nullable=False)
-    sector = Column(String(255), nullable=True)
-    source = Column(String(255), nullable=True)
-    investor_id = Column(Integer, ForeignKey("investor.id"), nullable=False)
+    id: int = Field(default=None, primary_key=True)
+    name: str
+    round: int
+    amount: float
+    category: Optional[str]
+    source: Optional[str]
+    sector: Optional[str]
+    source: Optional[str]
+    investor_id: int = Field(default=None, foreign_key="investor.id")
     created_at = Column(DateTime, nullable=False)

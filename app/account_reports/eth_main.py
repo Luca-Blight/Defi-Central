@@ -4,8 +4,9 @@ import requests
 import pytz
 import time
 import logging
-
+import asyncio
 import pandas as pd
+
 from web3 import Web3
 from itertools import chain
 from datetime import datetime
@@ -13,18 +14,34 @@ from helper import get_block_date, get_transaction_fee
 from account_info import contract_table, wallet_table
 from models.AccountLedger import AccountLedger
 from models.Account import Account
-from database.database import Session, engine
-from sqlalchemy import insert, delete, and_
-from typing import List
+from database.main import async_engine
 from accounts import eth_account_addresses
-from main import update_wallet_report_view
-from os import getenv
-from dotenv import load_dotenv
-from app.core.config import Settings
 
-load_dotenv(getenv("ENV_FILE"))
+from app.core.config import Settings
+from sqlalchemy.orm import sessionmaker
+from sqlmodel.ext.asyncio.session import AsyncSession
+from contextlib import asynccontextmanager
+from sqlmodel import insert, and_
+
+from dotenv import load_dotenv
+
+load_dotenv()
 
 settings = Settings()
+
+
+@asynccontextmanager
+async def get_async_session() -> AsyncSession:
+    async_session = sessionmaker(
+        bind=async_engine, class_=AsyncSession, expire_on_commit=False
+    )
+
+    session = async_session()
+
+    try:
+        yield session
+    finally:
+        await session.close()
 
 
 # make async
@@ -39,8 +56,6 @@ logging.basicConfig(
 
 log = logging.getLogger()
 
-session = Session()
-
 
 contract_names = list(contract_table.values())
 contract_addresses = list(contract_table.keys())
@@ -50,9 +65,9 @@ wallet_addresses = list(account_table.keys())
 
 
 # if wallet not in contract names, then it is a user wallet
-def map_stream(
+async def map_stream(
     stream: list, wallet_id: str, wallet_account: str, currency_type: str
-) -> List[dict]:
+) -> list[dict]:
     attributes = [
         "wallet_id",
         "from_wallet",
@@ -83,7 +98,7 @@ def map_stream(
                     f"This is the response received from {wallet_id} of {wallet_account}: {result}"
                 )
                 if result["result"].get("transfers", None):
-                    result: List[dict] = result["result"]["transfers"]
+                    result: list[dict] = result["result"]["transfers"]
                     for data in result:
                         if (
                             data["asset"] == "ETH"
@@ -153,7 +168,7 @@ def map_stream(
     return records
 
 
-def extract_stream(account: object, idx: int) -> pd.DataFrame:
+async def extract_stream(account: object, idx: int) -> pd.DataFrame:
     eth_walletledger_records = []
     eth_wallet_records = []
 
@@ -236,7 +251,7 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
             f"request failed with wallet account {account_address} of {account_id}, starting from block_number:{account_block_number}, error: {e}"
         )
 
-    mapped_data: List[dict] = map_stream(
+    mapped_data: list[dict] = map_stream(
         stream, account_id, account_address, account_currency
     )
 
@@ -246,7 +261,7 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
         pass
 
     if mapped_data:
-        mapped_data: List[dict] = sorted(mapped_data, key=lambda x: x["block_date"])
+        mapped_data: list[dict] = sorted(mapped_data, key=lambda x: x["block_date"])
 
         # logging.info(f"mapped_data: {mapped_data}")
 
@@ -279,7 +294,7 @@ def extract_stream(account: object, idx: int) -> pd.DataFrame:
         return wl_df, w_df
 
 
-def load_eth_stream(
+async def load_eth_stream(
     account: str, wl_transactions: pd.DataFrame, w_transactions: pd.DataFrame
 ) -> pd.DataFrame:
     if wl_transactions.empty:
@@ -288,7 +303,7 @@ def load_eth_stream(
         )
     else:
         # drop duplicates to prevent redundant transactions from being recorded, where multiple mints are concerned
-        account_ledger_records: List[dict] = (
+        account_ledger_records: list[dict] = (
             wl_transactions[
                 [
                     "wallet_id",
@@ -306,7 +321,7 @@ def load_eth_stream(
             .to_dict("records")
         )
 
-        with session.no_autoflush:
+        async with get_async_session() as session:
             insert_stmt = insert(AccountLedger).values(account_ledger_records)
 
             results = session.execute(insert_stmt).rowcount
@@ -328,7 +343,7 @@ def load_eth_stream(
             ]
         ].to_dict("records")[0]
 
-        with session:
+        async with get_async_session() as session:
             account: str = wallet_record["account"]
             account = (
                 session.query(Account)
@@ -352,7 +367,7 @@ def load_eth_stream(
             )
 
 
-def run_eth_pipeline(account_addresses: List[dict]):
+def run_eth_pipeline(account_addresses: list[dict]):
     for idx, account in enumerate(account_addresses):
         time.sleep(3)
 
@@ -373,7 +388,7 @@ if __name__ == "__main__":
         f"These are all the wallet addresses being run through the eth pipeline: {eth_account_addresses}"
     )
 
-    run_eth_pipeline(eth_account_addresses)
+    asyncio.run(run_eth_pipeline(eth_account_addresses))
 
     log.info(f"cleaning wallet_ledger table of duplicates")
     # cleans edge case duplicates in wallet_ledger table

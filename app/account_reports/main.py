@@ -7,24 +7,40 @@ import time
 import pytz
 import pandas as pd
 
-from app.wallet_reports.graphql.graphql_pb2_grpc import *
-from app.wallet_reports.graphql.graphql_pb2 import Request
+from app.graphql.graphql_pb2_grpc import *
+from app.graphql.graphql_pb2 import Request
 from google.protobuf.struct_pb2 import Struct
-from app.wallet_reports.query import Query
+from app.account_reports.query import Query
 from itertools import chain
 from datetime import datetime
 
-from app.wallet_reports.wallets import dfuse_wallet_addresses, WalletAddress
+from app.account_reports.accounts import Account
 
-from app.models.Account import Wallet
-from app.models.AccountLedger import WalletLedger
+from app.models.Account import Account
+from app.models.AccountLedger import AccountLedger
 from sqlalchemy.dialects.postgresql import insert as Insert
 from sqlalchemy import Integer, and_
 from app.models.ConversionRate import *
-from app.database import Session, engine
 from typing import List, Optional
+from sqlalchemy.orm import sessionmaker
+from sqlmodel.ext.asyncio.session import AsyncSession
+from database.main import async_engine
+from contextlib import asynccontextmanager
 
-session = Session()
+
+@asynccontextmanager
+async def get_async_session() -> AsyncSession:
+    async_session = sessionmaker(
+        bind=async_engine, class_=AsyncSession, expire_on_commit=False
+    )
+
+    session = async_session()
+
+    try:
+        yield session
+    finally:
+        await session.close()
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -65,7 +81,7 @@ def create_client(endpoint: str) -> object:
 
 
 def map_stream(
-    stream: object, wallet_id: str, wallet_account: str, currency_type: str, idx: int
+    stream: object, account_id: str, account: str, currency_type: str, idx: int
 ) -> List[dict]:
     attributes = [
         "cursor",
@@ -115,7 +131,7 @@ def map_stream(
                         "id"
                     ]
                     action = data["name"]
-                    account = wallet_account
+                    account = account
                     counter = idx
                     from_wallet = data["json"]["from"]
                     to_wallet = data["json"]["to"]
@@ -134,7 +150,7 @@ def map_stream(
                                     transaction_hash,
                                     global_sequence,
                                     action,
-                                    wallet_id,
+                                    account_id,
                                     from_wallet,
                                     to_wallet,
                                     quantity,
@@ -148,7 +164,7 @@ def map_stream(
 
     length_of_records = len(records)
     print(
-        f"There are {length_of_records} transactions in this query associated with {wallet_id} and account {wallet_account}"
+        f"There are {length_of_records} transactions in this query associated with {account_id} and account {account}"
     )
     return records
 
@@ -217,15 +233,15 @@ def extract_stream(wallet: object, idx: int) -> pd.DataFrame:
             return wl_df, w_df
 
 
-def load_stream(
+async def load_stream(
     wl_transactions: Optional[pd.DataFrame],
     w_transactions: Optional[pd.DataFrame],
     wallet: str,
     current_counter: int,
 ) -> pd.DataFrame:
     if wl_transactions.empty:
-        with session:
-            session.query(Wallet).update({Wallet.counter: current_counter})
+        async with get_async_session() as session:
+            session.query(Account).update({Account.counter: current_counter})
             print(
                 f"counter for all wallets has been updated with {current_counter}, no records from this wallet:{wallet.wallet_id} of account {wallet.account}"
             )
@@ -265,14 +281,15 @@ def load_stream(
             "records"
         )  # add account
 
-        with session:
+        async with get_async_session() as session:
             account = wallet_record["account"]
 
             wallet_result = (
-                session.query(Wallet)
+                session.query(Account)
                 .filter(
                     and_(
-                        Wallet.wallet_id == wallet.wallet_id, Wallet.account == account
+                        Account.wallet_id == wallet.wallet_id,
+                        Account.account == account,
                     )
                 )
                 .first()
@@ -289,10 +306,10 @@ def load_stream(
                 f"{wallet_result.wallet_id} of account {wallet_result.account} has been updated in the wallet table."
             )
 
-        with session.no_autoflush:
+        async with get_async_session() as session:
             account = wallet_record["account"]
 
-            insert_stmt = Insert(WalletLedger).values(wallet_ledger_records)
+            insert_stmt = Insert(AccountLedger).values(wallet_ledger_records)
             do_nothing_stmt = insert_stmt.on_conflict_do_nothing(
                 index_elements=["global_sequence"]
             )
@@ -302,8 +319,8 @@ def load_stream(
                 f"{wallet.wallet_id} of account {account} has been loaded to to the wallet_ledger table, there were {results} changes"
             )
 
-        with session:
-            session.query(Wallet).update({Wallet.counter: wallet_record["counter"]})
+        async with get_async_session() as session:
+            session.query(Account).update({Account.counter: wallet_record["counter"]})
 
             session.commit()
             print(
@@ -320,8 +337,8 @@ def initiate(wallets: List[WalletAddress], starting_counter: int) -> str:
         load_stream(wl_stream, w_stream, wallet, current_counter)
 
         if (len(wallets) - 1) == current_counter:
-            with session:
-                session.query(Wallet).update({Wallet.counter: 0})
+            async with get_async_session() as session:
+                session.query(Account).update({Account.counter: 0})
                 session.commit()
 
             return print(
@@ -331,7 +348,7 @@ def initiate(wallets: List[WalletAddress], starting_counter: int) -> str:
             continue
 
 
-def run_dfuse_pipeline(wallets: List[WalletAddress]):
+def run_dfuse_pipeline(wallets: list[Account]):
     """
 
     This pipeline will extract,map/transform, and load each wallet.
@@ -340,7 +357,7 @@ def run_dfuse_pipeline(wallets: List[WalletAddress]):
 
     """
 
-    initial_table = pd.read_sql("SELECT * FROM wallet LIMIT 1;", engine)
+    initial_table = pd.read_sql("SELECT * FROM wallet LIMIT 1;", async_engine)
 
     if initial_table.empty:
         # condition triggered on the first pull, subsequent pulls will trigger the else statement
@@ -357,7 +374,7 @@ def run_dfuse_pipeline(wallets: List[WalletAddress]):
 def update_wallet_report_view():
     walletledger_table = pd.read_sql(
         "SELECT DISTINCT wallet_id,to_wallet,from_wallet,memo,CAST(quantity as float),currency,transaction_hash,block_date,block_number FROM wallet_ledger;",
-        engine,
+        async_engine,
     )
 
     if walletledger_table.empty:
@@ -375,13 +392,13 @@ def update_wallet_report_view():
         )
         conversion_rate_table = pd.read_sql(
             "SELECT DISTINCT block_date,CAST(waxp_conversion_rate as float),CAST(eth_conversion_rate as float),CAST(matic_conversion_rate as float) FROM conversion_rate;",
-            engine,
+            async_engine,
         )
         walletledger_view = pd.merge(
             walletledger_table, conversion_rate_table, on=["block_date"], how="left"
         )
         walletledger_view.to_sql(
-            con=engine,
+            con=async_engine,
             name="wallet_ledger_view",
             if_exists="replace",
             index_label="id",

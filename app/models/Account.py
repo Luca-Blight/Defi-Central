@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 from datetime import datetime
-from sqlmodel import Field, SQLModel, Column, DateTime, Float
+from sqlmodel import Field, SQLModel, Column, DateTime
 
 
 class Account(SQLModel, table=True):

@@ -1,6 +1,5 @@
 from pydantic.dataclasses import dataclass
-from typing import List
-from database.database import engine
+from database.main import async_engine
 import pandas as pd
 import enum
 
@@ -33,11 +32,11 @@ currency_enums = {"ETH": CurrencyType.ETH, "MATIC": CurrencyType.MATIC}
 
 eth_accounts = pd.read_sql(
     """SELECT id, wallet_id, currency, cursor, block_number, account FROM wallet where currency = 'MATIC' or currency = 'ETH' ORDER BY id ASC """,
-    engine,
+    async_engine,
 ).to_dict("records")
 
 for account in eth_accounts:
     currency: str = account["currency"]
     account["currency"] = currency_enums[currency]
 
-eth_account_addresses: List[Account] = [Account(**account) for account in eth_accounts]
+eth_account_addresses: list[Account] = [Account(**account) for account in eth_accounts]

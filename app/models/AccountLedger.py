@@ -19,4 +19,3 @@ class AccountLedger(SQLModel, table=True):
     block_date: datetime
     block_number: int
     created_at: datetime = Field(default=datetime.utcnow)
-

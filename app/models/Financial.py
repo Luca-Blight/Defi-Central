@@ -5,7 +5,7 @@ from datetime import datetime
 
 class Financial(SQLModel, table=True):
     __tablename__ = "financial"
-    # ensure id is foreign key
+
     id: int = Field(default=None, primary_key=True)
     tvl: Optional[float]
     fees: Optional[float]

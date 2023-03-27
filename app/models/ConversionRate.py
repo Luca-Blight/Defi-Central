@@ -11,6 +11,3 @@ class ConversionRate(SQLModel, table=True):
     eth_conversion_rate: float
     matic_conversion_rate: float
     created_at: datetime = Field(default=datetime.utcnow)
-
-
-
