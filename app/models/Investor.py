@@ -1,11 +1,16 @@
-from database.database import Base
-from sqlmodel import SQLModel, Field, Column, Integer, String, DateTime, ForeignKey
+from sqlmodel import SQLModel, Field
+from typing import Optional
+from datetime import datetime
+from sqlmodel import Field, SQLModel, Column, DateTime, Float
 
 
 class Investor(SQLModel, table=True):
+    
     __tablename__ = "investor"
 
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    name = Column(String(255), nullable=False)
-    fund = Column(String(255), nullable=True)
-    created_at = Column(DateTime, nullable=False)
+    id: int = Field(default=None, primary_key=True)
+    name: str
+    fund: float
+    created_at: datetime = Column(DateTime, default=datetime.utcnow)
+
+

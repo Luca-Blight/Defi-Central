@@ -1,25 +1,21 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
-
-from sqlmodel import Field, SQLModel
+from sqlmodel import SQLModel, Field
+from typing import Optional
+from datetime import datetime
+from sqlmodel import Field, SQLModel, Column, DateTime, Float
 
 
 class Account(SQLModel, table=True):
     __tablename__ = "account"
 
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    account_id = Column(String(255), nullable=False)
-    cursor = Column(String(255), nullable=True)
-    account_address = Column(String(255), nullable=True)
-    block_date = Column(DateTime, nullable=True)
-    block_number = Column(Integer, nullable=False)
-    transaction_hash = Column(String(255), nullable=True)
-    currency = Column(String(64), nullable=True)
-    counter = Column(Integer, nullable=True)
-    description = Column(Text, nullable=True)
-    contract = Column(String(255), nullable=True)
-    created_at = Column(DateTime, nullable=False)
-
-
-engine = create_engine(sqlite_url, echo=True)
-
-SQLModel.metadata.create_all(engine)
+    id: int = Field(default=None, primary_key=True)
+    account_id: str
+    cursor: str
+    account_address: str
+    block_date: datetime
+    block_number: int
+    transaction_hash: str
+    currency: str
+    counter: int
+    description: Optional[str]
+    contract: bool
+    created_at: datetime = Column(DateTime, default=datetime.utcnow)
